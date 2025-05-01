@@ -1,0 +1,33 @@
+image: maven:3.8.1-jdk-11
+
+stages:
+  - build
+  - test
+
+cache:
+  paths:
+    - /root/.m2/repository/
+
+build-job:
+  stage: build
+  only:
+    - master
+    - merge_requests
+  script:
+    - echo "Building a JAR"
+    - mvn clean package
+  artifacts:
+    when: on_failure
+    expire_in: 1 hour
+
+test-job:
+  stage: test
+  only:
+    - master
+    - merge_requests
+  script:
+    - echo "Running 'mvn clean test'"
+    - mvn clean test
+  artifacts:
+    when: on_failure
+    expire_in: 1 hour
