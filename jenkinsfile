@@ -5,59 +5,83 @@ pipeline {
         pollSCM('H/1 * * * *')
     }
 
-    //tools {
-    //    jdk 'JDK11'      
-    //    maven 'Maven3'   
-    //}
-    //for build ,,.............. moree
+    environment {
+        LOG_DIR = "${WORKSPACE}/logs"
+        EMAIL = 's224679796@deakin.edu.au'
+    }
 
     stages {
         stage('Build') {
             steps {
                 echo 'Building with Maven...'
-                //sh 'mvn clean package'
+                // sh 'mvn clean package'
             }
         }
 
         stage('Unit and Integration Tests') {
             steps {
                 echo 'Running unit and integration tests...'
-                //sh 'mvn test'
+                // sh 'mvn test | tee ${LOG_DIR}/test.log'
+            }
+            post {
+                always {
+                    script {
+                        def logPath = "${LOG_DIR}/test.log"
+                        writeFile file: logPath, text: "Sample test log content..." // Replace with actual log capture
+                        emailext (
+                            to: "${EMAIL}",
+                            subject: "Unit and Integration Tests: ${currentBuild.currentResult}",
+                            body: "Stage 'Unit and Integration Tests' completed with status: ${currentBuild.currentResult}. Please find the logs attached.",
+                            attachmentsPattern: 'logs/test.log'
+                        )
+                    }
+                }
             }
         }
 
         stage('Code Analysis') {
             steps {
                 echo 'Running code quality analysis with SpotBugs...'
-                //sh 'mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs'
+                // sh 'mvn com.github.spotbugs:spotbugs-maven-plugin:spotbugs'
             }
         }
 
         stage('Security Scan') {
             steps {
                 echo 'Running OWASP Dependency-Check for vulnerabilities...'
-                //sh 'mvn org.owasp:dependency-check-maven:check'
+                // sh 'mvn org.owasp:dependency-check-maven:check | tee ${LOG_DIR}/security.log'
+            }
+            post {
+                always {
+                    script {
+                        def logPath = "${LOG_DIR}/security.log"
+                        writeFile file: logPath, text: "Sample security scan log..." // Replace with actual log capture
+                        emailext (
+                            to: "${EMAIL}",
+                            subject: "Security Scan: ${currentBuild.currentResult}",
+                            body: "Stage 'Security Scan' completed with status: ${currentBuild.currentResult}. Please find the logs attached.",
+                            attachmentsPattern: 'logs/security.log'
+                        )
+                    }
+                }
             }
         }
 
         stage('Deploy to Staging') {
             steps {
                 echo 'Deploying JAR to staging environment...'
-                //sh 'scp target/*.jar ec2-user@staging-server:/opt/todo-staging/' // Replace with your actual host/path
             }
         }
 
         stage('Integration Tests on Staging') {
             steps {
                 echo 'Running staging tests...'
-                //sh 'curl -I http://staging-server:8080/todo' // Adjust endpoint
             }
         }
 
         stage('Deploy to Production') {
             steps {
                 echo 'Deploying JAR to production environment...'
-                //sh 'scp target/*.jar ec2-user@production-server:/opt/todo-prod/' // Replace with your actual host/path
             }
         }
     }
